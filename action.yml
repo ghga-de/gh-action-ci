@@ -17,12 +17,18 @@ name: "GHGA CI action tasks"
 description: "Tasks that are executed in our CI pipeline for GHGA microservices"
 inputs:
   dockerhub_username:
-    description: "The DockerHub username."
+    description: "The DockerHub username"
     required: true
     default: "ghga"
   dockerhub_token:
-    description: "The DockerHub token used to authenticate."
+    description: "The DockerHub token used to authenticate"
     required: true
+  build_and_push_context:
+    description: ""
+    default: "."
+  trivy_severity:
+    description: "Severities of vulnerabilities to scanned for and displayed"
+    default: "CRITICAL,HIGH"
   tag:
     description: "The tag used to publish to the registry."
     required: true
@@ -78,7 +84,7 @@ runs:
         push: true
         platforms: linux/amd64,linux/arm64
         tags: "${{ inputs.dockerhub_username }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
-
+        context: "${{ inputs.build_and_push_context }}"
 
     - name: Run Trivy vulnerability scanner 
       uses: aquasecurity/trivy-action@master
@@ -88,7 +94,7 @@ runs:
         exit-code: "1"
         ignore-unfixed: true
         vuln-type: "os,library"
-        severity: "CRITICAL,HIGH"
+        severity: ${{ inputs.trivy_severity }}
 
     - name: Image digest
       shell: bash
