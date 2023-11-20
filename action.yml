@@ -1,0 +1,95 @@
+# Copyright 2022-2023 Universität Tübingen, DKFZ and EMBL
+# for the German Human Genome-Phenome Archive (GHGA)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: "GHGA CI action tasks"
+description: "Tasks that are executed in our CI pipeline for GHGA microservices"
+inputs:
+  dockerhub_username:
+    description: "The DockerHub username."
+    required: true
+    default: "ghga"
+  dockerhub_token:
+    description: "The DockerHub token used to authenticate."
+    required: true
+  tag:
+    description: "The tag used to publish to the registry."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+      name: Check out code
+
+    - if: contains(fromJSON('["release"]'), github.event_name)
+      name: Ensure that tag complies with semantic versioning.
+      uses: matt-usurp/validate-semver@v1
+      with:
+        version: ${{ inputs.tag }}
+
+    - if: contains(fromJSON('["release"]'), github.event_name)
+      uses: actions/setup-python@v4
+      name: Set up Python 3.9
+      with:
+        python-version: "3.9"
+
+    - if: contains(fromJSON('["release"]'), github.event_name)
+      name: Ensure package version and tag are equal
+      shell: bash
+      run: |
+        PKG_VER="$(python setup.py --version)"
+        TAG_VER=${{ inputs.package_version }}
+        [[ -z "$TAG_VER" ]] && TAG_VER=${{ inputs.tag }}
+        
+        echo "Package version is $PKG_VER" >&2
+        echo "Tag version is $TAG_VER" >&2
+        if [ "$PKG_VER" != "$TAG_VER" ]; then
+          echo "Package version and tag name mismatch." >&2
+          exit 1
+        fi
+
+    - uses: docker/setup-qemu-action@v2
+      name: Set up QEMU
+
+    - uses: docker/setup-buildx-action@v2
+      name: Set up Docker Buildx
+
+    - uses: docker/login-action@v2
+      name: Login to DockerHub
+      with:
+        username: ${{ inputs.dockerhub_username }}
+        password: ${{ inputs.dockerhub_token }}
+
+    - uses: docker/build-push-action@v4
+      name: Build and push
+      id: docker_build
+      with:
+        push: true
+        platforms: linux/amd64,linux/arm64
+        tags: "${{ inputs.dockerhub_username }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+
+
+    - name: Run Trivy vulnerability scanner 
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: "docker.io/${{ inputs.dockerhub_username }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        format: "table"
+        exit-code: "1"
+        ignore-unfixed: true
+        vuln-type: "os,library"
+        severity: "CRITICAL,HIGH"
+
+    - name: Image digest
+      shell: bash
+      run: echo ${{ steps.docker_build.outputs.digest }}
