@@ -1,0 +1,27 @@
+name: Test action
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test_action:
+    runs-on: ubuntu-latest
+    name: Install and test action
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test locally
+      uses: ./
+      with:
+        dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+        dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+        build_and_push_context: "./test/"
+        tag: 0.0.0
+        trivy_severity: "CRITICAL"
+    - name: Test release
+      uses: ghga-de/gh-action-ci@v1.0.0
+      with:
+        dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+        dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+        build_and_push_context: "./test/"
+        tag: 0.0.0
+        trivy_severity: "CRITICAL"
