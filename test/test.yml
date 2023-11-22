@@ -1,7 +1,7 @@
 name: Test action
 
 on:
-  workflow_dispatch:
+  release:
 
 jobs:
   test_action:
@@ -14,14 +14,14 @@ jobs:
       with:
         dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
         dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
-        build_and_push_context: "./test/"
-        tag: 0.0.0
+        working_directory: ./test
+        tag: "0.0.0"
         trivy_severity: "CRITICAL"
     - name: Test release
       uses: ghga-de/gh-action-ci@v1.0.0
       with:
         dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
         dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
-        build_and_push_context: "./test/"
-        tag: 0.0.0
+        working_directory: ./test
+        tag: "0.0.0"
         trivy_severity: "CRITICAL"

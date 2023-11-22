@@ -9,5 +9,5 @@ This GitHub Action encapsulates common steps that are executed in GitHub Action 
 
 ## Test action
 ```shell
-act -W test -s DOCKERHUB_USERNAME=*** -s DOCKERHUB_TOKEN=*** -e test/event.json
+act -W test -s DOCKERHUB_USERNAME=*** -s DOCKERHUB_TOKEN=***
 ```
