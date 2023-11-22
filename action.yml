@@ -23,8 +23,8 @@ inputs:
   dockerhub_token:
     description: "The DockerHub token used to authenticate"
     required: true
-  build_and_push_context:
-    description: ""
+  working_directory:
+    description: "Directory which contains Dockerfile and project configuration files"
     default: "."
   trivy_severity:
     description: "Severities of vulnerabilities to scanned for and displayed"
@@ -52,9 +52,20 @@ runs:
 
     - if: contains(fromJSON('["release"]'), github.event_name)
       name: Ensure package version and tag are equal
+      working-directory: ${{ inputs.working_directory }}
       shell: bash
       run: |
-        PKG_VER="$(python setup.py --version)"
+        if [ -f "setup.py" ]
+        then
+          PKG_VER="$(python setup.py --version)"
+        elif [ -f "pyproject.toml" ]
+        then
+          version=$(awk -F "=" '/version/ {print $2}' pyproject.toml | tr -d ' \t\n\r"')
+          PKG_VER=$version
+        else
+          echo "Neither setup.py nor pyproject.toml were found." >&2; exit 1
+        fi
+
         TAG_VER=${{ inputs.package_version }}
         [[ -z "$TAG_VER" ]] && TAG_VER=${{ inputs.tag }}
         
@@ -84,7 +95,7 @@ runs:
         push: true
         platforms: linux/amd64,linux/arm64
         tags: "${{ inputs.dockerhub_username }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
-        context: "${{ inputs.build_and_push_context }}"
+        context: "${{ inputs.working_directory }}"
 
     - name: Run Trivy vulnerability scanner 
       uses: aquasecurity/trivy-action@master
