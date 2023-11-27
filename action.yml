@@ -23,15 +23,20 @@ inputs:
   dockerhub_token:
     description: "The DockerHub token used to authenticate"
     required: true
+  tag:
+    description: "The tag used to publish to the registry."
+    required: true
+  dockerhub_namespace:
+    description: "The namespace used to publish to the registry."
+    required: true
+    default: ghga
   working_directory:
     description: "Directory which contains Dockerfile and project configuration files"
     default: "."
   trivy_severity:
     description: "Severities of vulnerabilities to scanned for and displayed"
     default: "CRITICAL,HIGH"
-  tag:
-    description: "The tag used to publish to the registry."
-    required: true
+
 runs:
   using: "composite"
   steps:
@@ -68,7 +73,7 @@ runs:
 
         TAG_VER=${{ inputs.package_version }}
         [[ -z "$TAG_VER" ]] && TAG_VER=${{ inputs.tag }}
-        
+
         echo "Package version is $PKG_VER" >&2
         echo "Tag version is $TAG_VER" >&2
         if [ "$PKG_VER" != "$TAG_VER" ]; then
@@ -94,13 +99,13 @@ runs:
       with:
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: "${{ inputs.dockerhub_username }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
         context: "${{ inputs.working_directory }}"
 
-    - name: Run Trivy vulnerability scanner 
+    - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: "docker.io/${{ inputs.dockerhub_username }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        image-ref: "docker.io/${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
         format: "table"
         exit-code: "1"
         ignore-unfixed: true

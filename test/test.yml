@@ -8,20 +8,21 @@ jobs:
     runs-on: ubuntu-latest
     name: Install and test action
     steps:
-    - uses: actions/checkout@v4
-    - name: Test locally
-      uses: ./
-      with:
-        dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-        dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
-        working_directory: ./test
-        tag: "0.0.0"
-        trivy_severity: "CRITICAL"
-    - name: Test release
-      uses: ghga-de/gh-action-ci@v1.0.0
-      with:
-        dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
-        dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
-        working_directory: ./test
-        tag: "0.0.0"
-        trivy_severity: "CRITICAL"
+      - uses: actions/checkout@v4
+      - name: Test locally
+        uses: ./
+        with:
+          dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          working_directory: ./test
+          tag: "0.0.0"
+          dockerhub_namespace: camillkaipf
+          trivy_severity: "CRITICAL"
+      - name: Test release
+        uses: ghga-de/gh-action-ci@v1.0.0
+        with:
+          dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          working_directory: ./test
+          tag: "0.0.0"
+          trivy_severity: "CRITICAL"
