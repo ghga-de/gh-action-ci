@@ -51,9 +51,9 @@ runs:
 
     - if: contains(fromJSON('["release"]'), github.event_name)
       uses: actions/setup-python@v4
-      name: Set up Python 3.9
+      name: Set up Python 3.11
       with:
-        python-version: "3.9"
+        python-version: "3.11"
 
     - if: contains(fromJSON('["release"]'), github.event_name)
       name: Ensure package version and tag are equal
@@ -65,7 +65,7 @@ runs:
           PKG_VER="$(python setup.py --version)"
         elif [ -f "pyproject.toml" ]
         then
-          version=$(awk -F "=" '/^version =/ {print $2}' pyproject.toml | tr -d ' \t\n\r"')
+          version=$(python3.11 -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
           PKG_VER=$version
         else
           echo "Neither setup.py nor pyproject.toml were found." >&2; exit 1
