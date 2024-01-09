@@ -65,7 +65,7 @@ runs:
           PKG_VER="$(python setup.py --version)"
         elif [ -f "pyproject.toml" ]
         then
-          version=$(awk -F "=" '/version/ {print $2}' pyproject.toml | tr -d ' \t\n\r"')
+          version=$(awk -F "=" '/^version =/ {print $2}' pyproject.toml | tr -d ' \t\n\r"')
           PKG_VER=$version
         else
           echo "Neither setup.py nor pyproject.toml were found." >&2; exit 1
