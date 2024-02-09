@@ -31,11 +31,14 @@ inputs:
     required: true
     default: ghga
   working_directory:
-    description: "Directory which contains Dockerfile and project configuration files"
+    description: "Directory which contains Dockerfile and project configuration files."
     default: "."
   trivy_severity:
-    description: "Severities of vulnerabilities to scanned for and displayed"
+    description: "Severities of vulnerabilities to scanned for and displayed."
     default: "CRITICAL,HIGH"
+  dockerhub_platforms:
+      description: "Platforms passed to DockerHub build and push action."
+      default: "linux/amd64,linux/arm64"
 
 runs:
   using: "composite"
@@ -98,7 +101,7 @@ runs:
       id: docker_build
       with:
         push: true
-        platforms: linux/amd64,linux/arm64
+        platforms: "${{ inputs.dockerhub_platforms }}"
         tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
         context: "${{ inputs.working_directory }}"
 
