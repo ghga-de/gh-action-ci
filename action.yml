@@ -36,6 +36,9 @@ inputs:
   trivy_severity:
     description: "Severities of vulnerabilities to scanned for and displayed."
     default: "CRITICAL,HIGH"
+  ignore_trivy:
+    description: "Whether to ignore Trivy vulnerabilities."
+    default: "false"
   dockerhub_platforms:
       description: "Platforms passed to DockerHub build and push action."
       default: "linux/amd64,linux/arm64"
@@ -114,6 +117,7 @@ runs:
         ignore-unfixed: true
         vuln-type: "os,library"
         severity: ${{ inputs.trivy_severity }}
+      continue-on-error: ${{ inputs.ignore_trivy }}
 
     - name: Image digest
       shell: bash
