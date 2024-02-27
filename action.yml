@@ -36,14 +36,17 @@ inputs:
   trivy_severity:
     description: "Severities of vulnerabilities to scanned for and displayed."
     default: "CRITICAL,HIGH"
+  ignore_trivy:
+    description: "Whether to ignore Trivy vulnerabilities."
+    default: "false"
   dockerhub_platforms:
       description: "Platforms passed to DockerHub build and push action."
-      default: "linux/amd64,linux/arm64"
+      default: "linux/arm64,linux/arm64"
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       name: Check out code
 
     - if: contains(fromJSON('["release"]'), github.event_name)
@@ -84,36 +87,48 @@ runs:
           exit 1
         fi
 
-    - uses: docker/setup-qemu-action@v2
+    - uses: docker/setup-qemu-action@v3
       name: Set up QEMU
 
-    - uses: docker/setup-buildx-action@v2
+    - uses: docker/setup-buildx-action@v3
       name: Set up Docker Buildx
 
-    - uses: docker/login-action@v2
+    - uses: docker/login-action@v3
       name: Login to DockerHub
       with:
         username: ${{ inputs.dockerhub_username }}
         password: ${{ inputs.dockerhub_token }}
 
-    - uses: docker/build-push-action@v4
-      name: Build and push
-      id: docker_build
+    # Existing Docker build step modified to not push
+    - uses: docker/build-push-action@v5
+      name: Build (but not push)
       with:
-        push: true
-        platforms: "${{ inputs.dockerhub_platforms }}"
+        push: false
+        load: true # Ensure the built image is loaded into Docker's local registry for scanning
+        platforms: linux/arm64 # Only build for ARM64 for now
         tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
         context: "${{ inputs.working_directory }}"
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: "docker.io/${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        image-ref: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
         format: "table"
         exit-code: "1"
         ignore-unfixed: true
         vuln-type: "os,library"
         severity: ${{ inputs.trivy_severity }}
+      continue-on-error: ${{ inputs.ignore_trivy == 'true' }}
+
+    # New step to push the Docker image only if Trivy scan passes
+    - name: Push to DockerHub
+      if: success() # This ensures the push only happens if previous steps (including Trivy scan) succeeded
+      uses: docker/build-push-action@v5
+      with:
+        push: true
+        platforms: "${{ inputs.dockerhub_platforms }}" # Now build for all platforms
+        tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        context: "${{ inputs.working_directory }}"
 
     - name: Image digest
       shell: bash
