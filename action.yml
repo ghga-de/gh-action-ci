@@ -118,7 +118,7 @@ runs:
         ignore-unfixed: true
         vuln-type: "os,library"
         severity: ${{ inputs.trivy_severity }}
-      continue-on-error: ${{ inputs.ignore_trivy }}
+      continue-on-error: ${{ inputs.ignore_trivy == 'true' }}
 
     # New step to push the Docker image only if Trivy scan passes
     - name: Push to DockerHub
