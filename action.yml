@@ -99,11 +99,12 @@ runs:
         username: ${{ inputs.dockerhub_username }}
         password: ${{ inputs.dockerhub_token }}
 
+    # Existing Docker build step modified to not push
     - uses: docker/build-push-action@v4
-      name: Build and push
-      id: docker_build
+      name: Build (but not push)
       with:
-        push: true
+        push: false
+        load: true # Ensure the built image is loaded into Docker's local registry for scanning
         platforms: "${{ inputs.dockerhub_platforms }}"
         tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
         context: "${{ inputs.working_directory }}"
@@ -111,13 +112,23 @@ runs:
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: "docker.io/${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        image-ref: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
         format: "table"
         exit-code: "1"
         ignore-unfixed: true
         vuln-type: "os,library"
         severity: ${{ inputs.trivy_severity }}
       continue-on-error: ${{ inputs.ignore_trivy }}
+
+    # New step to push the Docker image only if Trivy scan passes
+    - name: Push to DockerHub
+      if: success() # This ensures the push only happens if previous steps (including Trivy scan) succeeded
+      uses: docker/build-push-action@v4
+      with:
+        push: true
+        platforms: "${{ inputs.dockerhub_platforms }}"
+        tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        context: "${{ inputs.working_directory }}"
 
     - name: Image digest
       shell: bash
