@@ -41,7 +41,7 @@ inputs:
     default: "false"
   dockerhub_platforms:
       description: "Platforms passed to DockerHub build and push action."
-      default: "linux/amd64,linux/arm64"
+      default: "linux/amd64"
 
 runs:
   using: "composite"
