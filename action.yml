@@ -43,20 +43,20 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       name: Check out code
 
     - if: contains(fromJSON('["release"]'), github.event_name)
       name: Ensure that tag complies with semantic versioning.
-      uses: matt-usurp/validate-semver@v1
+      uses: matt-usurp/validate-semver@v2
       with:
         version: ${{ inputs.tag }}
 
     - if: contains(fromJSON('["release"]'), github.event_name)
-      uses: actions/setup-python@v4
-      name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      name: Set up Python 3.12
       with:
-        python-version: "3.11"
+        python-version: "3.12"
 
     - if: contains(fromJSON('["release"]'), github.event_name)
       name: Ensure package version and tag are equal
@@ -68,7 +68,7 @@ runs:
           PKG_VER="$(python setup.py --version)"
         elif [ -f "pyproject.toml" ]
         then
-          version=$(python3.11 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          version=$(python3.12 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
           PKG_VER=$version
         else
           echo "Neither setup.py nor pyproject.toml were found." >&2; exit 1
@@ -84,19 +84,19 @@ runs:
           exit 1
         fi
 
-    - uses: docker/setup-qemu-action@v2
+    - uses: docker/setup-qemu-action@v3
       name: Set up QEMU
 
-    - uses: docker/setup-buildx-action@v2
+    - uses: docker/setup-buildx-action@v3
       name: Set up Docker Buildx
 
-    - uses: docker/login-action@v2
+    - uses: docker/login-action@v3
       name: Login to DockerHub
       with:
         username: ${{ inputs.dockerhub_username }}
         password: ${{ inputs.dockerhub_token }}
 
-    - uses: docker/build-push-action@v4
+    - uses: docker/build-push-action@v5
       name: Build and push
       id: docker_build
       with:
