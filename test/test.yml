@@ -5,6 +5,9 @@ on:
 
 jobs:
   test_action:
+    strategy:
+      matrix:
+        flavor: ["", "alpine"]
     runs-on: ubuntu-latest
     name: Install and test action
     steps:
@@ -16,8 +19,9 @@ jobs:
           dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
           working_directory: ./test
           tag: "0.0.0"
-          dockerhub_namespace: camillkaipf
+          dockerhub_namespace: datametaci
           trivy_severity: "CRITICAL"
+          flavor: ${{ matrix.flavor }}
       - name: Test release
         uses: ghga-de/gh-action-ci@v1.0.0
         with:
@@ -26,3 +30,4 @@ jobs:
           working_directory: ./test
           tag: "0.0.0"
           trivy_severity: "CRITICAL"
+          flavor: ${{ matrix.flavor }}
