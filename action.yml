@@ -68,7 +68,7 @@ runs:
       run: |
         if [ -f "setup.py" ]
         then
-          echo "Executing setup.py"
+          echo "Using setup.py to extract python package version"
           PKG_VER="$(python setup.py --version)"
         elif [ -f "pyproject.toml" ]
         then
