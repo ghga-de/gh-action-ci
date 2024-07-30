@@ -39,6 +39,9 @@ inputs:
   dockerhub_platforms:
       description: "Platforms passed to DockerHub build and push action."
       default: "linux/amd64,linux/arm64"
+  flavor:
+    description: "Flavor to build. Expects 'Dockerfile.{flavor} to be present and appends '-{flavor}' to the tag."
+    default: ""
 
 runs:
   using: "composite"
@@ -65,9 +68,11 @@ runs:
       run: |
         if [ -f "setup.py" ]
         then
+          echo "Using setup.py to extract python package version"
           PKG_VER="$(python setup.py --version)"
         elif [ -f "pyproject.toml" ]
         then
+          echo "Using pyproject.toml to extract python package version"
           version=$(python3.12 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
           PKG_VER=$version
         else
@@ -96,13 +101,26 @@ runs:
         username: ${{ inputs.dockerhub_username }}
         password: ${{ inputs.dockerhub_token }}
 
+    - name: Construct Dockerfile and tag suffixes
+      shell: bash
+      id: get_suffixes
+      run: |
+        if [ -n "${{ inputs.flavor }}" ]; then
+          echo "dockerfile_suffix=.${{ inputs.flavor }}" >> $GITHUB_OUTPUT
+          echo "tag_suffix=-${{ inputs.flavor }}" >> $GITHUB_OUTPUT
+        else
+          echo "dockerfile_suffix=" >> $GITHUB_OUTPUT
+          echo "tag_suffix=" >> $GITHUB_OUTPUT
+        fi
+
     - uses: docker/build-push-action@v5
       name: Build and push
       id: docker_build
       with:
         push: true
         platforms: "${{ inputs.dockerhub_platforms }}"
-        tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        file: "${{ inputs.working_directory }}/Dockerfile${{ steps.get_suffixes.outputs.dockerfile_suffix }}"
+        tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}${{ steps.get_suffixes.outputs.tag_suffix }}"
         context: "${{ inputs.working_directory }}"
 
     - name: Run Trivy vulnerability scanner
