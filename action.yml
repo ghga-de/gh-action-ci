@@ -16,6 +16,10 @@
 name: "GHGA CI action tasks"
 description: "Tasks that are executed in our CI pipeline for GHGA microservices"
 inputs:
+  checkout:
+    description: "Checkout the repository"
+    required: false
+    default: "true"
   dockerhub_username:
     description: "The DockerHub username"
     required: true
@@ -48,6 +52,7 @@ runs:
   steps:
     - uses: actions/checkout@v4
       name: Check out code
+      if: ${{ inputs.checkout == 'true' }}
 
     - if: contains(fromJSON('["release"]'), github.event_name)
       name: Ensure that tag complies with semantic versioning.
