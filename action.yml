@@ -131,7 +131,7 @@ runs:
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: "docker.io/${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}"
+        image-ref: "docker.io/${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}${{ steps.get_suffixes.outputs.tag_suffix }}"
         format: "table"
         exit-code: "1"
         ignore-unfixed: true
