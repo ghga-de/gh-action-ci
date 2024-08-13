@@ -34,6 +34,10 @@ inputs:
     description: "The namespace used to publish to the registry."
     required: true
     default: ghga
+  dockerhub_repository:
+    description: "The Docker Hub repository to publish to. Defaults to git repository name."
+    required: false
+    default: ""
   working_directory:
     description: "Directory which contains Dockerfile and project configuration files."
     default: "."
@@ -118,6 +122,16 @@ runs:
           echo "tag_suffix=" >> $GITHUB_OUTPUT
         fi
 
+    - name: Infer target repository name
+      shell: bash
+      id: infer_repository
+      run: |
+        if [ -z "${{ inputs.dockerhub_repository }}" ]; then
+          echo "dockerhub_repository=${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
+        else
+          echo "dockerhub_repository=${{ inputs.dockerhub_repository }}" >> $GITHUB_OUTPUT
+        fi
+
     - uses: docker/build-push-action@v5
       name: Build and push
       id: docker_build
@@ -125,7 +139,7 @@ runs:
         push: true
         platforms: "${{ inputs.dockerhub_platforms }}"
         file: "${{ inputs.working_directory }}/Dockerfile${{ steps.get_suffixes.outputs.dockerfile_suffix }}"
-        tags: "${{ inputs.dockerhub_namespace }}/${{ github.event.repository.name }}:${{ inputs.tag }}${{ steps.get_suffixes.outputs.tag_suffix }}"
+        tags: "${{ inputs.dockerhub_namespace }}/${{ steps.infer_repository.outputs.dockerhub_repository }}:${{ inputs.tag }}${{ steps.get_suffixes.outputs.tag_suffix }}"
         context: "${{ inputs.working_directory }}"
 
     - name: Run Trivy vulnerability scanner
