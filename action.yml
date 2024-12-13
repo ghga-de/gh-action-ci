@@ -78,6 +78,7 @@ runs:
         if [ -f "setup.py" ]
         then
           echo "Using setup.py to extract python package version"
+          pip install setuptools
           PKG_VER="$(python setup.py --version)"
         elif [ -f "pyproject.toml" ]
         then
