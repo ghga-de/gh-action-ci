@@ -85,8 +85,11 @@ runs:
           echo "Using pyproject.toml to extract python package version"
           version=$(python3.12 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
           PKG_VER=$version
+        elif [ -f "package.json" ]
+        then
+          PKG_VER="$(jq -r .version package.json)"
         else
-          echo "Neither setup.py nor pyproject.toml were found." >&2; exit 1
+          echo "None of setup.py, pyproject.toml, package.json was found." >&2; exit 1
         fi
 
         TAG_VER=${{ inputs.package_version }}
