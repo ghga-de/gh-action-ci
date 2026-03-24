@@ -1,2 +1,2 @@
-FROM python:3.10.9-slim-bullseye
+FROM python:3.14.3-slim-bookworm
 WORKDIR /

@@ -4,7 +4,7 @@ This GitHub Action encapsulates common steps that are executed in GitHub Action 
 
 ```yaml
 - id: CI
-  uses: ghga-de/gh-action-ci@v1
+  uses: ghga-de/gh-action-ci@v2
 ```
 
 ## Test action
