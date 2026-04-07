@@ -144,7 +144,7 @@ runs:
 
     - if: inputs.trivy_enabled == 'true'
       name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.35.0
       env:
         TRIVY_DB_REPOSITORY: "ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db"
       with:
@@ -154,6 +154,7 @@ runs:
         ignore-unfixed: true
         vuln-type: "os,library"
         severity: ${{ inputs.trivy_severity }}
+        version: v0.69.3
 
     - name: Image digest
       shell: bash
