@@ -69,6 +69,9 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      content: read
     steps:
       - uses: actions/checkout@v6
         name: Check out code
@@ -163,6 +166,14 @@ jobs:
           context: "${{ inputs.working_directory }}"
           provenance: mode=max
           sbom: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image
+        run: |
+          cosign sign --yes \
+          ${{ inputs.dockerhub_namespace }}/${{ steps.repo.outputs.name }}@${{ steps.docker_build.outputs.digest }}
 
       - if: inputs.trivy_enabled == true
         name: Run Trivy vulnerability scanner
