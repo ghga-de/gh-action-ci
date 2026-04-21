@@ -141,7 +141,7 @@ jobs:
         name: Login to DockerHub
         with:
           username: ${{ inputs.dockerhub_username }}
-          password: ${{ secrets.dockerhub_token }}
+          password: ${{ inputs.dockerhub_token }}
 
       - name: Construct Dockerfile and tag suffixes
         shell: bash
