@@ -65,6 +65,9 @@ on:
       dockerhub_token:
         description: "The DockerHub token used to authenticate"
         required: true
+      dockerhub_username:
+        description: "The DockerHub username. Overrides the dockerhub_username input when set."
+        required: false
 
 jobs:
   build-and-push:
@@ -140,7 +143,7 @@ jobs:
       - uses: docker/login-action@v4
         name: Login to DockerHub
         with:
-          username: ${{ inputs.dockerhub_username }}
+          username: ${{ secrets.dockerhub_username || inputs.dockerhub_username }}
           password: ${{ secrets.dockerhub_token }}
 
       - name: Construct Dockerfile and tag suffixes
@@ -168,9 +171,13 @@ jobs:
           sbom: true
 
       - name: Install cosign
+        # Skipped in act: OIDC tokens are not available locally.
+        # In real GitHub Actions the JWT ref/sha claims reflect the caller's branch.
+        if: ${{ !env.ACT }}
         uses: sigstore/cosign-installer@v3
 
       - name: Sign image
+        if: ${{ !env.ACT }}
         run: |
           cosign sign --yes \
           ${{ inputs.dockerhub_namespace }}/${{ steps.repo.outputs.name }}@${{ steps.docker_build.outputs.digest }}
